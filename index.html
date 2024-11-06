@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Graph Plotter</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+   <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: lightgrey;
+        }
+        #graph {
+            width: 100%;
+            height: 500px;
+        }
+        .bigger{
+            font-size: 20px;
+        }
+        .try{
+            padding: 10px;
+            border: 1px solid black;
+        }
+        .try > span{
+            color: blue;
+        }
+   </style>
+</head>
+<body>
+    <h1>Interactive Graph Plotter By Mihajlo Zivkovic</h1>
+    <div>
+        <p class="bigger">Enter a function:</p>
+        <label for="functionInput" class="bigger">y=</label>
+        <input type="text" id="functionInput" value="sin(x)" class="bigger"/>
+        <button onclick="plotGraph()" class="bigger">Plot</button>
+    </div>
+    <div id="graph"></div>
+    <div class="try">TRY FUNCTIONS LIKE: <br><span>sin(x), cos(x), log(x), exp(x), sqrt(x), abs(x), 1/x, x*x, pow(x,3), x*x + x + 1 ...</span></div>
+    <script>
+        // Function to replace common math functions with Math equivalents
+        function preprocessFunction(input) {
+            const mathFunctions = ['sin', 'cos', 'tan', 'log', 'exp', 'sqrt', 'pow', 'abs'];
+            
+            // Replace math functions with Math equivalents
+            mathFunctions.forEach(fn => {
+                const regex = new RegExp(`\\b${fn}\\b`, 'g'); // Match full word
+                input = input.replace(regex, `Math.${fn}`);
+            });
+
+            return input;
+        }
+
+        function plotGraph() {
+            const funcInput = document.getElementById('functionInput').value;
+            const processedFunc = preprocessFunction(funcInput); // Preprocess user input
+
+            try {
+                const xValues = [];
+                const yValues = [];
+
+                // Generate X and Y values for the graph
+                for (let x = -10; x <= 10; x += 0.1) {
+                    xValues.push(x);
+
+                    try {
+                        const y = new Function('x', `return ${processedFunc}`)(x); // Evaluate the processed function
+                        
+                        // Avoid plotting if the result is Infinity, NaN, or extremely large values
+                        if (isFinite(y) && Math.abs(y) < 1e6) {
+                            yValues.push(y);
+                        } else {
+                            yValues.push(null); // Insert null for skipped points
+                        }
+                    } catch (e) {
+                        yValues.push(null); // Skip points with errors
+                    }
+                }
+
+                // Plot using Plotly with responsive layout
+                const trace = {
+                    x: xValues,
+                    y: yValues,
+                    mode: 'lines',
+                    line: { color: 'blue' }
+                };
+
+                const layout = {
+                    title: 'Graph of the Function',
+                    xaxis: { title: 'X-axis' },
+                    yaxis: { title: 'Y-axis' },
+                    plot_bgcolor: 'lightgrey', // Set plot background to light grey
+                    paper_bgcolor: 'lightgrey', // Set paper background (around the plot) to light grey
+                    showlegend: false,
+                    autosize: true, // Enables automatic resizing
+                    responsive: true // Ensures the graph resizes with the window
+                };
+
+                Plotly.newPlot('graph', [trace], layout, { responsive: true });
+            } catch (error) {
+                alert('Invalid function. Please enter a valid JavaScript expression.');
+            }
+        }
+    </script>
+</body>
+</html>
+
